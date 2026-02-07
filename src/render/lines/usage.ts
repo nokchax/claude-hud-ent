@@ -125,13 +125,27 @@ function formatDollars(cents: number): string {
   return `$${dollars.toFixed(2)}`;
 }
 
+function getExtraUsageColor(percent: number): string {
+  if (percent >= 90) return '\x1b[31m';  // red
+  if (percent >= 70) return '\x1b[33m';  // yellow
+  return '\x1b[32m';                      // green
+}
+
+function extraUsageBar(percent: number, width: number = 10): string {
+  const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
+  const filled = Math.round((safePercent / 100) * width);
+  const empty = width - filled;
+  const color = getExtraUsageColor(safePercent);
+  return `${color}${'█'.repeat(filled)}\x1b[2m${'░'.repeat(empty)}${RESET}`;
+}
+
 function formatExtraUsage(extra: ExtraUsage, barEnabled: boolean): string {
-  const color = getContextColor(extra.utilization);
+  const color = getExtraUsageColor(extra.utilization);
   const pct = `${color}${extra.utilization}%${RESET}`;
   const used = formatDollars(extra.usedCredits);
   const limit = formatDollars(extra.monthlyLimit);
   if (barEnabled) {
-    return `${quotaBar(extra.utilization)} ${pct} ${dim('(')}${used}${dim('/')}${limit}${dim(')')}`;
+    return `${extraUsageBar(extra.utilization)} ${pct} ${dim('(')}${used}${dim('/')}${limit}${dim(')')}`;
   }
   return `${pct} ${dim('(')}${used}${dim('/')}${limit}${dim(')')}`;
 }
