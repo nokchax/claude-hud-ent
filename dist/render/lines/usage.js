@@ -107,11 +107,12 @@ function formatDollars(cents) {
 }
 function formatExtraUsage(extra, barEnabled) {
     const color = getContextColor(extra.utilization);
+    const pct = `${color}${extra.utilization}%${RESET}`;
     const used = formatDollars(extra.usedCredits);
     const limit = formatDollars(extra.monthlyLimit);
     if (barEnabled) {
-        return `${quotaBar(extra.utilization)} ${color}${used}${RESET}${dim('/')}${limit}`;
+        return `${quotaBar(extra.utilization)} ${pct} ${dim('(')}${used}${dim('/')}${limit}${dim(')')}`;
     }
-    return `${color}${used}${RESET}${dim('/')}${limit}`;
+    return `${pct} ${dim('(')}${used}${dim('/')}${limit}${dim(')')}`;
 }
 //# sourceMappingURL=usage.js.map
