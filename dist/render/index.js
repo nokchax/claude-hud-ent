@@ -59,6 +59,9 @@ function renderExpanded(ctx) {
     else if (identityLine) {
         lines.push(identityLine);
     }
+    else if (usageLine) {
+        lines.push(usageLine);
+    }
     const environmentLine = renderEnvironmentLine(ctx);
     if (environmentLine) {
         lines.push(environmentLine);

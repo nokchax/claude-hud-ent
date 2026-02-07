@@ -98,6 +98,7 @@ export async function getUsage(overrides = {}) {
                 sevenDay: null,
                 fiveHourResetAt: null,
                 sevenDayResetAt: null,
+                extraUsage: null,
                 apiUnavailable: true,
                 apiError: apiResult.error,
             };
@@ -110,12 +111,15 @@ export async function getUsage(overrides = {}) {
         const sevenDay = parseUtilization(apiResult.data.seven_day?.utilization);
         const fiveHourResetAt = parseDate(apiResult.data.five_hour?.resets_at);
         const sevenDayResetAt = parseDate(apiResult.data.seven_day?.resets_at);
+        // Parse extra_usage (monthly overage for Max plans etc.)
+        const extraUsage = parseExtraUsage(apiResult.data.extra_usage);
         const result = {
             planName,
             fiveHour,
             sevenDay,
             fiveHourResetAt,
             sevenDayResetAt,
+            extraUsage,
         };
         // Write to file cache
         writeCache(homeDir, result, now);
@@ -307,6 +311,20 @@ function parseDate(dateStr) {
         return null;
     }
     return date;
+}
+/** Parse extra_usage from API response (monthly overage for Max plans) */
+function parseExtraUsage(raw) {
+    if (!raw?.is_enabled)
+        return null;
+    const utilization = parseUtilization(raw.utilization);
+    if (utilization === null)
+        return null;
+    return {
+        isEnabled: true,
+        monthlyLimit: raw.monthly_limit ?? 0,
+        usedCredits: raw.used_credits ?? 0,
+        utilization,
+    };
 }
 function fetchUsageApi(accessToken) {
     return new Promise((resolve) => {

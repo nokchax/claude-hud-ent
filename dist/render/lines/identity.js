@@ -2,20 +2,21 @@ import { getContextPercent, getBufferedPercent, getTotalTokens } from '../../std
 import { coloredBar, dim, getContextColor, RESET } from '../colors.js';
 const DEBUG = process.env.DEBUG?.includes('claude-hud') || process.env.DEBUG === '*';
 export function renderIdentityLine(ctx) {
+    const display = ctx.config?.display;
+    if (display?.showContextBar === false) {
+        return null;
+    }
     const rawPercent = getContextPercent(ctx.stdin);
     const bufferedPercent = getBufferedPercent(ctx.stdin);
-    const autocompactMode = ctx.config?.display?.autocompactBuffer ?? 'enabled';
+    const autocompactMode = display?.autocompactBuffer ?? 'enabled';
     const percent = autocompactMode === 'disabled' ? rawPercent : bufferedPercent;
     if (DEBUG && autocompactMode === 'disabled') {
         console.error(`[claude-hud:context] autocompactBuffer=disabled, showing raw ${rawPercent}% (buffered would be ${bufferedPercent}%)`);
     }
-    const display = ctx.config?.display;
     const contextValueMode = display?.contextValue ?? 'percent';
     const contextValue = formatContextValue(ctx, percent, contextValueMode);
     const contextValueDisplay = `${getContextColor(percent)}${contextValue}${RESET}`;
-    let line = display?.showContextBar !== false
-        ? `${dim('Context')} ${coloredBar(percent)} ${contextValueDisplay}`
-        : `${dim('Context')} ${contextValueDisplay}`;
+    let line = `${dim('Context')} ${coloredBar(percent)} ${contextValueDisplay}`;
     if (display?.showTokenBreakdown !== false && percent >= 85) {
         const usage = ctx.stdin.context_window?.current_usage;
         if (usage) {

@@ -45,12 +45,19 @@ export interface UsageWindow {
     utilization: number | null;
     resetAt: Date | null;
 }
+export interface ExtraUsage {
+    isEnabled: true;
+    monthlyLimit: number;
+    usedCredits: number;
+    utilization: number;
+}
 export interface UsageData {
     planName: string | null;
     fiveHour: number | null;
     sevenDay: number | null;
     fiveHourResetAt: Date | null;
     sevenDayResetAt: Date | null;
+    extraUsage?: ExtraUsage | null;
     apiUnavailable?: boolean;
     apiError?: string;
 }

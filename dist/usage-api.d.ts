@@ -9,6 +9,12 @@ interface UsageApiResponse {
         utilization?: number;
         resets_at?: string;
     };
+    extra_usage?: {
+        is_enabled?: boolean;
+        monthly_limit?: number;
+        used_credits?: number;
+        utilization?: number;
+    };
 }
 interface UsageApiResult {
     data: UsageApiResponse | null;

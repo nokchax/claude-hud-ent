@@ -26,13 +26,23 @@ export function renderUsageLine(ctx) {
     const threshold = display?.usageThreshold ?? 0;
     const fiveHour = ctx.usageData.fiveHour;
     const sevenDay = ctx.usageData.sevenDay;
+    const extraUsage = ctx.usageData.extraUsage;
+    const usageBarEnabled = display?.usageBarEnabled ?? true;
     const effectiveUsage = Math.max(fiveHour ?? 0, sevenDay ?? 0);
+    // If 5h/7d both null or below threshold, but extraUsage exists → show extra only
+    if (fiveHour === null && sevenDay === null && extraUsage) {
+        const extraPart = formatExtraUsage(extraUsage, usageBarEnabled);
+        return `${label} ${dim('Extra')} ${extraPart}`;
+    }
     if (effectiveUsage < threshold) {
+        if (extraUsage) {
+            const extraPart = formatExtraUsage(extraUsage, usageBarEnabled);
+            return `${label} ${dim('Extra')} ${extraPart}`;
+        }
         return null;
     }
     const fiveHourDisplay = formatUsagePercent(ctx.usageData.fiveHour);
     const fiveHourReset = formatResetTime(ctx.usageData.fiveHourResetAt);
-    const usageBarEnabled = display?.usageBarEnabled ?? true;
     const fiveHourPart = usageBarEnabled
         ? (fiveHourReset
             ? `${quotaBar(fiveHour ?? 0)} ${fiveHourDisplay} (${fiveHourReset} / 5h)`
@@ -40,6 +50,7 @@ export function renderUsageLine(ctx) {
         : (fiveHourReset
             ? `5h: ${fiveHourDisplay} (${fiveHourReset})`
             : `5h: ${fiveHourDisplay}`);
+    let result = '';
     const sevenDayThreshold = display?.sevenDayThreshold ?? 80;
     if (sevenDay !== null && sevenDay >= sevenDayThreshold) {
         const sevenDayDisplay = formatUsagePercent(sevenDay);
@@ -49,9 +60,17 @@ export function renderUsageLine(ctx) {
                 ? `${quotaBar(sevenDay)} ${sevenDayDisplay} (${sevenDayReset} / 7d)`
                 : `${quotaBar(sevenDay)} ${sevenDayDisplay}`)
             : `7d: ${sevenDayDisplay}`;
-        return `${label} ${fiveHourPart} | ${sevenDayPart}`;
+        result = `${label} ${fiveHourPart} | ${sevenDayPart}`;
     }
-    return `${label} ${fiveHourPart}`;
+    else {
+        result = `${label} ${fiveHourPart}`;
+    }
+    // Append extra_usage if present
+    if (extraUsage) {
+        const extraPart = formatExtraUsage(extraUsage, usageBarEnabled);
+        result += ` | ${dim('Extra')} ${extraPart}`;
+    }
+    return result;
 }
 function formatUsagePercent(percent) {
     if (percent === null) {
@@ -81,5 +100,18 @@ function formatResetTime(resetAt) {
     const hours = Math.floor(diffMins / 60);
     const mins = diffMins % 60;
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+}
+function formatDollars(cents) {
+    const dollars = cents / 100;
+    return `$${dollars.toFixed(2)}`;
+}
+function formatExtraUsage(extra, barEnabled) {
+    const color = getContextColor(extra.utilization);
+    const used = formatDollars(extra.usedCredits);
+    const limit = formatDollars(extra.monthlyLimit);
+    if (barEnabled) {
+        return `${quotaBar(extra.utilization)} ${color}${used}${RESET}${dim('/')}${limit}`;
+    }
+    return `${color}${used}${RESET}${dim('/')}${limit}`;
 }
 //# sourceMappingURL=usage.js.map
